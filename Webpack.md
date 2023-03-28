@@ -62,8 +62,7 @@ babel的转译过程也分为三个阶段，这三步具体是：
 - 转换Transform: 对于AST进⾏变换⼀系列的操作，babel接受得到AST并通过 
 - babel-traverse对其进⾏遍历，在此过程中进⾏添加、更新及移除等操作；   
 ⽣成 Generate: 将变换后的AST再转换为JS代码, 使⽤到的模块是 babel-generator。    
-![](
-http://rr7byi9s5.hb-bkt.clouddn.com/babel%E5%8E%9F%E7%90%86.webp)
+![](http://rr7byi9s5.hb-bkt.clouddn.com/blog-image/babel-banner.png)
 
 
 ### 8、如何⽤webpack 来优化前端性能？
