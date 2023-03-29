@@ -45,16 +45,20 @@ rollup适⽤于基础库的打包，如vue、d3等: Rollup就是将各个模块�
 
 ### 6、webpack热更新的实现原理？
 webpack的热更新⼜称热替换（Hot Module Replacement），缩写为HMR。这个机制可以做到不⽤刷新浏览器⽽将新变更的模块替换掉旧的模块。   
-原理：    
+原理：  
+
 ![](http://rr7byi9s5.hb-bkt.clouddn.com/webpack%E7%83%AD%E6%9B%B4%E6%96%B0.webp)  
 
-⾸先要知道server端和client端都做了处理⼯作：     
-- 第⼀步，在webpack的watch模式下，⽂件系统中某⼀个⽂件发⽣修改，webpack监听到⽂件变化，根据配置⽂件对模块重新编译打包，并将打包后的代码通过简单的JavaScript对象保存在内存中。     
-- 第⼆步，webpack-dev-server和webpack之间的接⼝交互，⽽在这⼀步，主要是dev-server的中间件webpack-dev-middleware和webpack之间的交互，webpack-dev-middleware调⽤webpack暴露的API对代码变化进⾏监控，并且告诉webpack，将代码打包到内存中。     
-- 第三步，webpack-dev-server对⽂件变化的⼀个监控，这⼀步不同于第⼀步，并不是监控代码变化重新打包。当我们在配置⽂件中配置了devServer.watchContentBase为true的时候，Server会监听这些配置⽂件夹中静态⽂件的变化，变化后会通知浏览器端对应⽤进⾏live reload。注意，这⼉是浏览器刷新，和HMR是两个概念。     
-- 第四步，也是webpack-dev-server代码的⼯作，该步骤主要是通过sockjs（webpack-dev-server的依赖）在浏览器端和服务端之间建⽴⼀个websocket⻓连接，将webpack编译打包的各个阶段的状态信息告知浏览器端，同时也包括第三步中Server监听静态⽂件变化的信息。浏览器端根据这些socket消息进⾏不同的操作。当然服务端传递的最主要信息还是新模块的hash值，后⾯的步骤根据这⼀hash值来进⾏模块热替换。webpack-dev-server/client端并不能够请求更新的代码，也不会执⾏热更模块操作，⽽把这些⼯作⼜交回给了webpack，webpack/hot/dev-server的⼯作就是根据webpack-dev-server/client传给它的信息以及dev-server的配置决定是刷新浏览器呢还是进⾏模块热更新。当然如果仅仅是刷新浏览器，也就没有后⾯那些步骤了。     
-HotModuleReplacement.runtime是客户端HMR的中枢，它接收到上⼀步传递给他的新模块的hash值，它 通过JsonpMainTemplate.runtime向server端发送Ajax请求，服务端返回⼀个json，该json包含了所有要更新的模块的hash值，获取到更新列表后，该模块再次通过jsonp请求，获取到最新的模块代码。这就是上图中7、8、9步骤。     
-⽽第10步是决定HMR成功与否的关键步骤，在该步骤中，HotModulePlugin将会对新旧模块进⾏对⽐，决定是否更新模块，在决定更新模块后，检查模块之间的依赖关系，更新模块的同时更新模块间的依赖引⽤。 最后⼀步，当HMR失败后，回退到live reload操作，也就是进⾏浏览器刷新来获取最新打包代码。
+先简述一下流程。这里涉及到：webpack、webpack-dev-server、浏览器
+1. webpack-dev-server中的 webpack-dev-middleware 中间件调用了 webpack的watch方法，监听原文件的变化，根据配置文件进行模块的重新打包，并将打包后的代码通过js对象保存在内存中。
+2. 在启动时 webpack-dev-server 就已经通过sockjs与浏览器端建立了一个webSocket长链接，并且监听webpack的compile的done事件，在compile完成后将新模块的hash值通过webSocket发送到浏览器。
+3. 同时， webpack-dev-server 本身还会在初始化的时候使用webpack-dev-server/client包添加到entry，这样在构建出来的包里就存在处理scoket请求的client代码了。
+4. 浏览器端接收socket发送过来的文件hash并存储，之后根据webpack/hot的配置决定是发送hash给webpack去做热更新还是直接重新刷新页面。（如果配置了hot，则将hash发送给webpack在浏览器端的代码去做热更新）
+5. 如果做热更新则 浏览器上的webpack/hot/dev-server会调用check方法作对比，check之后会调用 hotDownloadUpdateChunk 方法获取新hash值所对应的代码块，然后将代码块交个 webpack/lib/HotModuleReplacement.runtime 进行热更新。
+6. webpack/lib/HotModuleReplacement.runtime 中执行了hotApply方法，这个方法删除了更新前的代码缓存并将新的模块添加到modules中。 （如果在热更新过程中出现错误，热更新将回退到刷新浏览器）
+7. 在入口文件中调用 HMR 的 accept 方法，即将变化的文件的返回值插入到页面。
+
+另外 vue-loader 中对于加载的热更新，vue-loader在内部也执行了 module.hot.accept() ，这部分在 vue-hot-reload-api 中有介绍
 
 ### 7、Babel 的原理是什么?
 babel的转译过程也分为三个阶段，这三步具体是： 
