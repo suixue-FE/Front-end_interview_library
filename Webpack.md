@@ -71,6 +71,7 @@ babel的转译过程也分为三个阶段，这三步具体是：
 
 ### 8、如何⽤webpack 来优化前端性能？
 ⽤webpack优化前端性能是指优化webpack的输出结果，让打包的最终结果在浏览器运⾏快速⾼效。   
+首先使用 webpack-bundle-analyzer插件分析打包结果，根据打包结果快速定位需要优化的内容。
 ***压缩代码：*** 删除多余的代码、注释、简化代码的写法等等⽅式。可以利⽤webpack的UglifyJsPlugin和ParallelUglifyPlugin（webpack5内置使用terser-webpack-plugin）来压缩JS⽂件，利⽤cssnano（css-loader?minimize）来压缩css。    
 ***利⽤CDN 加速:*** 在构建过程中，将引⽤的静态资源路径修改为CDN上对应的路径。可以利⽤webpack对于output参数和各loader的publicPath参数来修改资源路径。    
 ***Tree Shaking:*** 将代码中永远不会⾛到的⽚段删除掉。可以通过在启动webpack时追加参数 --optimize-minimize来实现。   
@@ -97,7 +98,7 @@ babel的转译过程也分为三个阶段，这三步具体是：
 ***完成模块编译：*** 在经过第4步使用 Loader 翻译完所有模块后，得到了每个模块被翻译后的最终内容以及它们之间的依赖关系     
 ***输出资源：*** 根据入口和模块之间的依赖关系，组装成一个个包含多个模块的 Chunk，再把每个 Chunk 转换成一个单独的文件加入到输出列表，这步是可以修改输出内容的最后机会    
 ***输出完成：*** 在确定好输出内容后，根据配置确定输出的路径和文件名，把文件内容写入到文件系统。
-
+最后，一切的配置都不如升个版本，新版本yyds。
 
 ### 11、如何编写Loader?
 Loader支持链式调用，所以开发上需要严格遵循“单一职责”，每个Loader只负责自己需要负责的事情。    
